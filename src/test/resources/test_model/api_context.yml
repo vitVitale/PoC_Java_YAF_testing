@@ -1,0 +1,16 @@
+---
+rest:
+  - name: 'SomeControllerAPI'
+    path: 'http://host.docker.internal:8082'
+    disable_retryer: true
+    default_timeout: 10
+    ssl:
+      verify: false
+sqldb:
+  - name: 'localDB'
+    drivername: postgresql
+    host: postgres
+    port: 5432
+    database: postgres
+    username: postgres
+    password: admin

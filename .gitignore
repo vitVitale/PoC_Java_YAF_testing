@@ -1,0 +1,4 @@
+/gradle/
+/src/test/resources/test_model/allure-result/
+/src/test/resources/test_model/allure-report/
+/build/

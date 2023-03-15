@@ -1,0 +1,125 @@
+plugins {
+    id 'java'
+    id 'jacoco'
+    id 'org.sonarqube' version '2.7'
+    id 'org.springframework.boot' version '2.6.2'
+    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+}
+
+group 'com.vit.aft'
+version '1.0.0'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.projectlombok:lombok:1.18.22'
+    implementation 'org.postgresql:postgresql:42.3.1'
+    implementation 'io.vavr:vavr:0.10.4'
+
+    compileOnly 'org.projectlombok:lombok:1.18.22'
+
+    annotationProcessor 'org.projectlombok:lombok:1.18.22'
+    annotationProcessor 'org.springframework:spring-context-indexer'
+
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.22'
+    testAnnotationProcessor "org.springframework:spring-context-indexer"
+
+    testImplementation 'io.vavr:vavr:0.10.4'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+    testImplementation 'org.testcontainers:testcontainers:1.17.6'
+    testImplementation 'org.testcontainers:junit-jupiter:1.17.6'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter-params:5.9.0'
+
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.0'
+}
+
+var testResources = "${projectDir}/src/test/resources"
+var dirOfComponents = "${testResources}/integration_components"
+var dirOfFeatures = "${testResources}/test_model/features"
+var allureArtifact = "${testResources}/test_model/allure"
+
+test {
+    environment "YAF_IMAGE_TAG", frameworkVersion
+    environment "FEATURE_FILES", featureFiles
+    environment "TAGS", testTags
+    useJUnitPlatform()
+}
+
+jacocoTestReport {
+    reports {
+        xml.enabled true
+        xml.destination file("${buildDir}/jacoco/coverage.xml")
+    }
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [])
+        }))
+    }
+    dependsOn test
+}
+
+clean {
+    doFirst {
+        delete "${allureArtifact}-report"
+        delete "${allureArtifact}-result"
+        println 'Remove Allure artifacts !'
+    }
+}
+
+task rollUp(group: "st_runner", description: "Settings & Deploy Testing Environment") {
+    doFirst {
+        exec { commandLine "docker", "network", "create", "ST_network"; ignoreExitValue true }
+        exec { commandLine "docker-compose", "-f", "${dirOfComponents}/docker-compose.infra.yml", "up", "-d" }
+    }
+}
+
+task checkYmlStruct(group: "st_runner", description: "Validate your YAML-feature files") {
+    doLast {
+        var yml_files = featureFiles == "" ? fileTree(dirOfFeatures)
+                .filter { it.isFile() }
+                .files.name
+                .join(',') : featureFiles
+        var stdout = new ByteArrayOutputStream()
+        exec {
+            commandLine "${testResources}/validator",
+                    "--schema=${testResources}/schema.json",
+                    "--dir=${testResources}/test_model/features",
+                    "--yaml=${yml_files}"
+            standardOutput = stdout
+        }
+        var validation_report = stdout.toString()
+        if (!validation_report.contains("VALIDATION SUCCESSFUL")) {
+            throw new GradleException("!!!! feature file needs fixes !!!!\n\n${validation_report}")
+        }
+        println validation_report
+    }
+}
+
+task runTests(group: "st_runner", description: "Run Tests") {
+    dependsOn checkYmlStruct, clean, jacocoTestReport
+    doLast {
+        println 'Tests Complete!'
+    }
+}
+
+task tearDown(group: "st_runner", description: "Tear Down & CleanUp") {
+    doLast {
+        exec { commandLine "docker-compose", "-f", "${dirOfComponents}/docker-compose.infra.yml", "down", "-v", "--remove-orphans" }
+    }
+}
+
+task fullCycleST(group: "st_runner", description: "ST testing Full-Cycle Pipeline") {
+    dependsOn clean, checkYmlStruct, rollUp, runTests, tearDown
+    checkYmlStruct.mustRunAfter(clean)
+    rollUp.mustRunAfter(checkYmlStruct)
+    runTests.mustRunAfter(rollUp)
+    tearDown.mustRunAfter(runTests)
+}

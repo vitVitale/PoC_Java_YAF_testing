@@ -1,0 +1,21 @@
+version: "3.0"
+services:
+  yaf_runner:
+    image: vitvitale/yaf_runner:${YAF_IMAGE_TAG}
+    restart: 'no'
+    networks:
+      - ST_network
+    volumes:
+      - ./test_model/:/app/test_model/
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      TZ: Europe/Moscow
+      THREADS: 0
+      TEST_MODEL: ${FEATURE_FILES}
+      TAGS: ${TAGS}
+      CUSTOM_CTX: 'test_model._extensions_.context'
+      FLAKY_RERUN: 0
+
+networks:
+  ST_network:
+    external: true

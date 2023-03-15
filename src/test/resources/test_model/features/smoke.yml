@@ -1,0 +1,32 @@
+---
+epic: Pilot ST Coverage
+feature: Some controller
+
+tests:
+  - name: 'Пробный тест -> {{ argument }}'
+    tags: ['covering_test']
+    test_data:
+      - { argument: 'Vit', code: '200', response: 'Hello Vit' }
+      - { argument: 'Investor', code: '200', response: 'Please provide a name!' }
+      - { argument: '4', code: '200', response: 'Please provide a name!' }
+#      - { argument: 'False', code: '400', response: 'Please provide a name!' }
+    steps:
+      - command: Отправить запрос REST-SomeControllerAPI
+        params:
+          text: |-
+            curl -X GET '{{ BASE_PATH SomeControllerAPI }}/some/msg/{{ argument }}'
+          expected: 'HTTP CODE: {{ code }}'
+      - command: Проверяем значение поля ответа
+        params:
+          text: |-
+            STRUCT : RS_1
+          expected: '{{ response }}'
+
+  - name: 'Падающий тест'
+    tags: ['failed']
+    steps:
+      - command: Отправить запрос REST-SomeControllerAPI
+        params:
+          text: |-
+            curl -X GET '{{ BASE_PATH SomeControllerAPI }}/some/msg/False'
+          expected: 'HTTP CODE: 400'
