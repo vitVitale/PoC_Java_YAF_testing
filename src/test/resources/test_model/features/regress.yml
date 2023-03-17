@@ -27,7 +27,7 @@ setup:
         - command: Выполнить Bash скрипт
           params:
             text: |-
-              docker stop {{ stopable }}
+              docker stop {{ stoppable }}
               sleep 2
               docker ps --all --format 'CONTAINER [{{.Names}}]  >>  STATUS [{{.Status}}]'
             expected: 'NO SAVE'
@@ -130,7 +130,7 @@ tests:
   - name: Проверка ендпоинта /new - (недоступность БД)
     tags: ['unavailable_DB', 'covering_test']
     test_data:
-      - { stopable: 'postgres', status: '503', answer: 'Проблема с доступностью БД !' }
+      - { stoppable: 'postgres', status: '503', answer: 'Проблема с доступностью БД !' }
     steps:
       - command: Отправить запрос REST-SomeControllerAPI
         params:

@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.DynamicTest.dynamicTest;
 @Testcontainers
 public class TestApplication {
 
-    public static final String YAF_DOCKER_COMPOSE_LOCATION = "src/test/resources/docker-compose.yaffat.yml";
+    public static final String YAF_DOCKER_COMPOSE_LOCATION = "src/test/resources/docker-compose.runner.yml";
     public static final String YAF_COMPLETE_LOG_CHECK = "Report successfully generated .+";
     public static final String SUITES_CSV = "src/test/resources/test_model/allure-report/data/suites.csv";
 
