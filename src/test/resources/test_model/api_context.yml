@@ -14,3 +14,7 @@ sqldb:
     database: postgres
     username: postgres
     password: admin
+docker:
+  container_log_listener:
+    - 'stub'
+    - 'postgres'

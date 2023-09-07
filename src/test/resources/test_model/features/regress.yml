@@ -7,8 +7,8 @@ setup:
     required: ['localDB']
   once:
     before:
-      - command: Выполнить запрос на изменение в БД-localDB
-        allure_step: Подготовим БД
+      - command: Execute changing request in DB-localDB
+        allure_step: Prepare the database
         params:
           text: |-
             SET search_path TO my_schema;
@@ -17,14 +17,14 @@ setup:
   only:
     - tags: ['DB_required']
       before:
-        - command: Выполнить запрос на изменение в БД-localDB
+        - command: Execute changing request in DB-localDB
           params:
             text: |-
               SET search_path TO my_schema;
             expected: 'NO CHANGES ALLOWED'
     - tags: ['unavailable_DB']
       before:
-        - command: Выполнить Bash скрипт
+        - command: Execute Bash script
           params:
             text: |-
               docker stop {{ stoppable }}
@@ -32,7 +32,7 @@ setup:
               docker ps --all --format 'CONTAINER [{{.Names}}]  >>  STATUS [{{.Status}}]'
             expected: 'NO SAVE'
       after:
-        - command: Выполнить Bash скрипт
+        - command: Execute Bash script
           params:
             text: |-
               {{ GET_FILE runStoppedContainers.sh }}
@@ -41,7 +41,7 @@ setup:
 ########################################################################################################################
 
 tests:
-  - name: Тест с источником аргументов из файла
+  - name: Test with argument source from file
     tags: ['DB_required', 'useless']
     # userId;query;pronounceText;intent;scenario
     test_data_from_csv:
@@ -50,8 +50,8 @@ tests:
       from: 38
       to: 45
     steps:
-      - command: Выполнить запрос на изменение в БД-localDB
-        allure_step: Запишем параметры в БД
+      - command: Execute changing request in DB-localDB
+        allure_step: Write the parameters to the database
         params:
           text: |-
             INSERT INTO salute_assistant(user_id, query_phrase, pronounce_text, scenario, intent)
@@ -59,12 +59,12 @@ tests:
           expected: 'ONLY WITH CHANGES'
 
 
-  - name: Проверка ендпоинта /new - (создание клиента)
+  - name: Endpoint check /new - (creating a client)
     tags: ['DB_required', 'covering_test']
     test_data:
-      - { status: '201', answer: 'Создан клиент: стр. № \d+' }
+      - { status: '201', answer: 'Client created: row. # \d+' }
     steps:
-      - command: Отправить запрос REST-SomeControllerAPI
+      - command: Send request REST-SomeControllerAPI
         params:
           text: |-
             curl -X POST '{{ BASE_PATH SomeControllerAPI }}/some/new' \
@@ -72,19 +72,19 @@ tests:
             -H 'accept: */*' \
             -d '{"clientName":"Vitale","hobbies":"eat","mainGreeting":"Hi =)"}'
           expected: 'HTTP CODE: {{ status }}'
-      - command: Проверяем значение поля ответа
+      - command: Check value of response field
         params:
           text: |-
             STRUCT : RS_1
           expected: 'REGEX {{ answer }}'
 
 
-  - name: Проверка ендпоинта /new - (уникальность clientName)
+  - name: Endpoint check /new - (uniqueness of clientName)
     tags: ['covering_test']
     test_data:
-      - { status: '400', answer: 'Запись с таким clientName уже существует !' }
+      - { status: '400', answer: 'A record with the same clientName already exists !' }
     steps:
-      - command: Отправить запрос REST-SomeControllerAPI
+      - command: Send request REST-SomeControllerAPI
         params:
           text: |-
             curl -X POST '{{ BASE_PATH SomeControllerAPI }}/some/new' \
@@ -92,7 +92,7 @@ tests:
             -H 'accept: */*' \
             -d '{"clientName":"Dima","hobbies":"games","mainGreeting":"Hola !"}'
           expected: 'HTTP CODE: 201'
-      - command: Отправить запрос REST-SomeControllerAPI
+      - command: Send request REST-SomeControllerAPI
         params:
           text: |-
             curl -X POST '{{ BASE_PATH SomeControllerAPI }}/some/new' \
@@ -100,19 +100,19 @@ tests:
             -H 'accept: */*' \
             -d '{"clientName":"Dima","hobbies":"music","mainGreeting":"Hello =|"}'
           expected: 'HTTP CODE: {{ status }}'
-      - command: Проверяем значение поля ответа
+      - command: Check value of response field
         params:
           text: |-
             STRUCT : RS_2
           expected: '{{ answer }}'
 
 
-  - name: Проверка ендпоинта /new - (пропущено clientName)
+  - name: Endpoint check /new - (missing clientName)
     tags: ['covering_test']
     test_data:
-      - { status: '400', answer: 'clientName не передан либо равен null !' }
+      - { status: '400', answer: 'clientName is not passed or is null !' }
     steps:
-      - command: Отправить запрос REST-SomeControllerAPI
+      - command: Send request REST-SomeControllerAPI
         params:
           text: |-
             curl -X POST '{{ BASE_PATH SomeControllerAPI }}/some/new' \
@@ -120,19 +120,19 @@ tests:
             -H 'accept: */*' \
             -d '{"hobbies":"guitar","mainGreeting":"Bonjour !"}'
           expected: 'HTTP CODE: {{ status }}'
-      - command: Проверяем значение поля ответа
+      - command: Check value of response field
         params:
           text: |-
             STRUCT : RS_1
           expected: '{{ answer }}'
 
 
-  - name: Проверка ендпоинта /new - (недоступность БД)
+  - name: Endpoint check /new - (database unavailability)
     tags: ['unavailable_DB', 'covering_test']
     test_data:
-      - { stoppable: 'postgres', status: '503', answer: 'Проблема с доступностью БД !' }
+      - { stoppable: 'postgres', status: '503', answer: 'Database availability problem !' }
     steps:
-      - command: Отправить запрос REST-SomeControllerAPI
+      - command: Send request REST-SomeControllerAPI
         params:
           text: |-
             curl -X POST '{{ BASE_PATH SomeControllerAPI }}/some/new' \
@@ -140,23 +140,23 @@ tests:
             -H 'accept: */*' \
             -d '{"clientName":"Alex","hobbies":"guitar","mainGreeting":"Bonjour !"}'
           expected: 'HTTP CODE: {{ status }}'
-      - command: Проверяем значение поля ответа
+      - command: Check value of response field
         params:
           text: |-
             STRUCT : RS_1
           expected: '{{ answer }}'
 
 
-  - name: Проверка ендпоинта /new - (удалена таблица в БД)
+  - name: Endpoint check /new - (table deleted in database)
     tags: ['DB_required', 'covering_test']
     test_data:
-      - { status: '500', answer: 'Неизвестная ошибка сервера !' }
+      - { status: '500', answer: 'Unknown server error !' }
     steps:
-      - command: Выполнить запрос на изменение в БД-localDB
+      - command: Execute changing request in DB-localDB
         params:
           text: 'DROP TABLE client CASCADE'
           expected: 'NO CHANGES ALLOWED'
-      - command: Отправить запрос REST-SomeControllerAPI
+      - command: Send request REST-SomeControllerAPI
         params:
           text: |-
             curl -X POST '{{ BASE_PATH SomeControllerAPI }}/some/new' \
@@ -164,7 +164,7 @@ tests:
             -H 'accept: */*' \
             -d '{"clientName":"Tom","hobbies":"tennis","mainGreeting":"Salute !"}'
           expected: 'HTTP CODE: {{ status }}'
-      - command: Проверяем значение поля ответа
+      - command: Check value of response field
         params:
           text: |-
             STRUCT : RS_1

@@ -3,7 +3,7 @@ epic: Pilot ST Coverage
 feature: Some controller
 
 tests:
-  - name: 'Пробный тест -> {{ argument }}'
+  - name: 'Test sample -> {{ argument }}'
     tags: ['covering_test']
     test_data:
       - { argument: 'Vit', code: '200', response: 'Hello Vit' }
@@ -11,21 +11,21 @@ tests:
       - { argument: '4', code: '200', response: 'Please provide a name!' }
 #      - { argument: 'False', code: '400', response: 'Please provide a name!' }
     steps:
-      - command: Отправить запрос REST-SomeControllerAPI
+      - command: Send request REST-SomeControllerAPI
         params:
           text: |-
             curl -X GET '{{ BASE_PATH SomeControllerAPI }}/some/msg/{{ argument }}'
           expected: 'HTTP CODE: {{ code }}'
-      - command: Проверяем значение поля ответа
+      - command: Check value of response field
         params:
           text: |-
             STRUCT : RS_1
           expected: '{{ response }}'
 
-  - name: 'Падающий тест'
+  - name: 'Test with error'
     tags: ['failed']
     steps:
-      - command: Отправить запрос REST-SomeControllerAPI
+      - command: Send request REST-SomeControllerAPI
         params:
           text: |-
             curl -X GET '{{ BASE_PATH SomeControllerAPI }}/some/msg/False'

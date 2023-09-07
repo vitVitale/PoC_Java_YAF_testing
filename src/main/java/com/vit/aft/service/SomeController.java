@@ -45,19 +45,19 @@ public class SomeController {
         if (Objects.isNull(client.getClientName())) {
             return ResponseEntity.badRequest()
                     .headers(headers)
-                    .body("clientName не передан либо равен null !");
+                    .body("clientName is not passed or is null !");
         }
         return Try.of(() -> ResponseEntity
                         .status(HttpStatus.CREATED)
                         .headers(headers)
-                        .body(String.format("Создан клиент: стр. № %d", clientRepository.save(client).getId())))
+                        .body(String.format("Client created: row. # %d", clientRepository.save(client).getId())))
                 .recover(ex -> Match(ex).of(
                         Case($(instanceOf(DataIntegrityViolationException.class)), () ->
-                                ResponseEntity.badRequest().body("Запись с таким clientName уже существует !")),
+                                ResponseEntity.badRequest().body("A record with the same clientName already exists !")),
                         Case($(instanceOf(CannotCreateTransactionException.class)), () ->
-                                ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Проблема с доступностью БД !")),
+                                ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Database availability problem !")),
                         Case($(), () ->
-                                ResponseEntity.internalServerError().body("Неизвестная ошибка сервера !"))))
+                                ResponseEntity.internalServerError().body("Unknown server error !"))))
                 .get();
     }
 }

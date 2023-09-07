@@ -1,8 +1,10 @@
-version: "3.0"
+version: "3.8"
 services:
   yaf_runner:
     image: vitvitale/yaf_runner:${YAF_IMAGE_TAG}
     restart: 'no'
+    security_opt:
+      - seccomp:unconfined
     networks:
       - ST_network
     volumes:

@@ -36,7 +36,7 @@ public class TestApplication {
             .build();
 
     @SneakyThrows
-    @DisplayName("Тесты выполненные YAF-контейнером")
+    @DisplayName("Tests performed by the YAF-container")
     @TestFactory
     public Collection<DynamicTest> dynamicTestsFromCollection() {
         dockerExtension.launch_YAF();
